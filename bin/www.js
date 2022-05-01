@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-import app from '../app.js';
+import app from '../app/app.js';
 import debugLib from 'debug';
 import http from 'http';
 const debug = debugLib('mycoin:server');
@@ -11,7 +11,7 @@ const debug = debugLib('mycoin:server');
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3000');
+var port = normalizePort(process.env.HTTP_PORT || '3000');
 app.set('port', port);
 
 /**
