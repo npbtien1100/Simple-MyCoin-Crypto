@@ -18,8 +18,8 @@ class Blockchain {
       1,
       parseInt(Date.parse("2022-04-30") / 1000),
       [],
-      "0",
-      this.difficulty
+      this.difficulty,
+      "0"
     );
   }
 
@@ -96,7 +96,7 @@ class Blockchain {
     }
 
     // Verify the transactiion
-    if (!transaction.isValid()) {
+    if (!Transaction.isValid(transaction)) {
       throw new Error("Cannot add invalid transaction to chain");
     }
 
@@ -175,20 +175,20 @@ class Blockchain {
    *
    * @returns {boolean}
    */
-  isChainValid() {
+  isChainValid(chain) {
     // Check if the Genesis block hasn't been tampered with by comparing
     // the output of createGenesisBlock with the first block on our chain
     const realGenesis = JSON.stringify(this.createGenesisBlock());
 
-    if (realGenesis !== JSON.stringify(this.chain[0])) {
+    if (realGenesis !== JSON.stringify(chain[0])) {
       return false;
     }
 
     // Check the remaining blocks on the chain to see if there hashes and
     // signatures are correct
-    for (let i = 1; i < this.chain.length; i++) {
-      const currentBlock = this.chain[i];
-      const previousBlock = this.chain[i - 1];
+    for (let i = 1; i < chain.length; i++) {
+      const currentBlock = Block.getInstanceFromJSON(chain[i]);
+      const previousBlock = chain[i - 1];
 
       if (previousBlock.index + 1 !== currentBlock.index) {
         return false;

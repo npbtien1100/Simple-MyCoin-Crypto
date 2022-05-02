@@ -1,14 +1,22 @@
 import crypto from "crypto";
 import debugLib from "debug";
+import Transaction from "../transaction/transaction.js";
 const debug = debugLib("mycoin:server");
 
 class Block {
-  constructor(index, timestamp, transactions, previousHash = "", difficulty) {
+  constructor(
+    index,
+    timestamp,
+    transactions,
+    difficulty,
+    previousHash = "",
+    nonce = 0
+  ) {
     this.index = index;
     this.previousHash = previousHash;
     this.timestamp = timestamp;
     this.transactions = transactions;
-    this.nonce = 0;
+    this.nonce = nonce;
     this.difficulty = difficulty;
     this.hash = this.calculateHash();
   }
@@ -46,12 +54,24 @@ class Block {
 
   hasValidTransactions() {
     for (const tx of this.transactions) {
-      if (!tx.isValid()) {
+      if (!Transaction.isValid(tx)) {
         return false;
       }
     }
 
     return true;
+  }
+
+  nonce = 0;
+  static getInstanceFromJSON(block) {
+    return new Block(
+      block.index,
+      block.timestamp,
+      block.transactions,
+      block.difficulty,
+      block.previousHash,
+      block.nonce
+    );
   }
 }
 

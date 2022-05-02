@@ -1,5 +1,4 @@
-import WebSocket from "ws";
-
+import { WebSocketServer } from "ws";
 //declare the peer to peer server port
 const P2P_PORT = process.env.P2P_PORT || 5001;
 
@@ -21,12 +20,12 @@ class P2pserver {
 
   listen() {
     // create the p2p server with port as argument with  cors disabled
-    const server = new WebSocket.Server({
+    const server = new WebSocketServer({
       port: P2P_PORT,
       verifyClient: (info, done) => {
         //verify the client
         console.log("info ", info);
-        done(info.origin === "http://localhost:3000");
+        done(process.env.ALLOW_CONNECTION);
       },
     });
 
@@ -158,4 +157,4 @@ class P2pserver {
   }
 }
 
-module.exports = P2pserver;
+export default P2pserver;
