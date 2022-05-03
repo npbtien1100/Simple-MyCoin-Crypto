@@ -3,12 +3,19 @@ import EC from "elliptic";
 const ec = new EC.ec("secp256k1");
 
 class Transaction {
-  constructor(fromAddress, toAddress, amount) {
+  constructor(
+    fromAddress,
+    toAddress,
+    amount,
+    timestamp = Date.now(),
+    signature = ""
+  ) {
     this.fromAddress = fromAddress;
     this.toAddress = toAddress;
     this.amount = amount;
-    this.timestamp = Date.now();
+    this.timestamp = timestamp;
     this.hash = this.calculateHash();
+    this.signature = signature;
   }
 
   /**
@@ -55,7 +62,7 @@ class Transaction {
     // If the transaction doesn't have a from address we assume it's a
     // mining reward and that it's valid. You could verify this in a
     // different way (special field for instance)
-    if (tst.fromAddress === null) return true;
+    if (tst.fromAddress === "MyCoin system") return true;
 
     if (!tst.signature || tst.signature.length === 0) {
       throw new Error("No signature in this transaction");
@@ -63,6 +70,16 @@ class Transaction {
 
     const publicKey = ec.keyFromPublic(tst.fromAddress, "hex");
     return publicKey.verify(tst.hash, tst.signature);
+  }
+
+  static getInstanceFromJSON(tst) {
+    return new Transaction(
+      tst.fromAddress,
+      tst.toAddress,
+      tst.amount,
+      tst.timestamp,
+      tst.signature
+    );
   }
 }
 

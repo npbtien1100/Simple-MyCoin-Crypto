@@ -6,3 +6,8 @@ chain or querys for the full blockchain.
 _ thay đổi độ khó của blockchain
 _ clear transactions pool
 _ add new transaction to transactions pool
+
+a. Tạo Ví(Wallet)
+b. Xem thống kê tài khoản
+c. Gởi coin cho một địa chỉ khác
+d. Xem lịch sử giao dịch (https://etherscan.io/)

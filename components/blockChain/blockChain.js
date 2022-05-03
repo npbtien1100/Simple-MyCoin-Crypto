@@ -5,22 +5,17 @@ import Transaction from "../transaction/transaction.js";
 
 class Blockchain {
   constructor() {
-    this.chain = [this.createGenesisBlock()];
-    this.difficulty = 2;
+    this.difficulty = 4;
     this.transactionsPool = [];
     this.miningReward = 10;
     this.DIFFICULTY_ADJUSTMENT_INTERVAL = 2016;
     this.BLOCK_GENERATION_INTERVAL = 10;
+    this.initial_balance = 300;
+    this.chain = [this.createGenesisBlock()];
   }
 
   createGenesisBlock() {
-    return new Block(
-      1,
-      parseInt(Date.parse("2022-04-30") / 1000),
-      [],
-      this.difficulty,
-      "0"
-    );
+    return new Block(1, Date.parse("2022-04-30"), [], this.difficulty, "0");
   }
 
   getLatestBlock() {
@@ -37,7 +32,7 @@ class Blockchain {
   minePendingTransactions(miningRewardAddress) {
     if (this.transactionsPool.length > 0) {
       const rewardTx = new Transaction(
-        null,
+        "MyCoin system",
         miningRewardAddress,
         this.miningReward
       );
@@ -46,10 +41,10 @@ class Blockchain {
       const difficulty = this.getDifficulty();
       const block = new Block(
         this.chain.length + 1,
-        parseInt(Date.now() / 1000),
+        Date.now(),
         this.transactionsPool,
-        this.getLatestBlock().hash,
-        difficulty
+        difficulty,
+        this.getLatestBlock().hash
       );
       block.mineBlock(this.difficulty);
 
@@ -57,13 +52,14 @@ class Blockchain {
       this.chain.push(block);
 
       this.transactionsPool = [];
+      return block;
     }
   }
 
   getDifficulty() {
     const latestBlock = this.getLatestBlock();
     if (
-      latestBlock.index % DIFFICULTY_ADJUSTMENT_INTERVAL === 0 &&
+      latestBlock.index % this.DIFFICULTY_ADJUSTMENT_INTERVAL === 0 &&
       latestBlock.index !== 0
     ) {
       this.getAdjustedDifficulty();
@@ -75,8 +71,9 @@ class Blockchain {
       this.chain[this.chain.length - this.DIFFICULTY_ADJUSTMENT_INTERVAL];
     const timeExpected =
       this.BLOCK_GENERATION_INTERVAL * 60 * this.DIFFICULTY_ADJUSTMENT_INTERVAL;
-    const timeTaken =
-      this.getLatestBlock().timestamp - prevAdjustmentBlock.timestamp;
+    const timeTaken = parseInt(
+      (this.getLatestBlock().timestamp - prevAdjustmentBlock.timestamp) / 1000
+    );
     if (timeTaken < timeExpected / 2) {
       this.difficulty = prevAdjustmentBlock.difficulty + 1;
     } else if (timeTaken > timeExpected * 2) {
@@ -106,6 +103,7 @@ class Blockchain {
 
     // Making sure that the amount sent is not greater than existing balance
     const walletBalance = this.getBalanceOfAddress(transaction.fromAddress);
+    console.log({ walletBalance });
     if (walletBalance < transaction.amount) {
       throw new Error("Not enough balance");
     }
@@ -124,6 +122,7 @@ class Blockchain {
         .reduce((prev, curr) => prev + curr);
 
       const totalAmount = totalPendingAmount + transaction.amount;
+      console.log({ totalAmount });
       if (totalAmount > walletBalance) {
         throw new Error(
           "Pending transactions for this wallet is higher than its balance."
@@ -136,7 +135,7 @@ class Blockchain {
   }
 
   getBalanceOfAddress(address) {
-    let balance = 0;
+    let balance = this.initial_balance;
 
     for (const block of this.chain) {
       for (const trans of block.transactions) {
@@ -198,11 +197,7 @@ class Blockchain {
         return false;
       }
 
-      if (!currentBlock.hasValidTransactions()) {
-        return false;
-      }
-
-      if (currentBlock.hash !== currentBlock.calculateHash()) {
+      if (!currentBlock.isBlockValid()) {
         return false;
       }
     }
@@ -210,7 +205,8 @@ class Blockchain {
     return true;
   }
 
-  replaceChain(newChain) {
+  replaceChain(newBlockChain) {
+    const newChain = newBlockChain.chain;
     if (newChain.length <= this.chain.length) {
       console.log("Recieved chain is not longer than the current chain");
       return;
@@ -219,8 +215,18 @@ class Blockchain {
       return;
     }
 
+    this.chain = newBlockChain.chain;
+    this.difficulty = newBlockChain.difficulty;
+    this.transactionsPool = newBlockChain.transactionsPool;
     console.log("Replacing the current chain with new chain");
-    this.chain = newChain;
+  }
+
+  addBlock(block) {
+    if (block.isBlockValid()) {
+      this.chain.push(block);
+      this.difficulty = block.difficulty;
+      this.transactionsPool = [];
+    }
   }
 }
 

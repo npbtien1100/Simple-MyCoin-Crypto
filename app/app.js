@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import path from "path";
 import cookieParser from "cookie-parser";
@@ -13,6 +14,8 @@ import Blockchain from "../components/blockChain/blockChain.js";
 import P2pserver from "./p2p-server.js";
 
 import EC from "elliptic";
+import Wallet from "../components/wallet/wallet.js";
+import Transaction from "../components/transaction/transaction.js";
 const ec = new EC.ec("secp256k1");
 
 const __filename = fileURLToPath(import.meta.url);
@@ -30,6 +33,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 const MyCoin = new Blockchain();
+let wallet = null;
 // Your private key goes here
 const myKey = ec.keyFromPrivate(
   "7c4c45907dec40c91bab3480c39032e90049f1a44f3e18c3e07c23e3273995cf"
@@ -44,7 +48,9 @@ app.use("/users", usersRouter);
 app.get("/blocks", (req, res) => {
   res.json(MyCoin.chain);
 });
-
+app.get("/blockchain", (req, res) => {
+  res.json(MyCoin);
+});
 //api to add blocks
 app.post("/mine", (req, res) => {
   //const block = MyCoin.addBlock(req.body.data);
@@ -60,8 +66,10 @@ app.post("/mine", (req, res) => {
 
 // api to start mining
 app.get("/mine-transactions", (req, res) => {
-  const block = miner.mine();
-  console.log(`New block added: ${block.toString()}`);
+  const block = MyCoin.minePendingTransactions(wallet.publicKey);
+
+  p2pserver.broadcastBlock(block);
+
   res.redirect("/blocks");
 });
 
@@ -72,18 +80,21 @@ app.get("/transactions", (req, res) => {
 
 // create transactions
 app.post("/transact", (req, res) => {
-  console.log(req.body);
-  const { recipient, amount } = req.body;
+  try {
+    const { recipient, amount } = req.body;
 
-  console.log(`Recipient: ${recipient} | Amount: ${amount}`);
-  //   const transaction = wallet.createTransaction(
-  //     recipient,
-  //     parseInt(amount),
-  //     blockchain,
-  //     transactionPool
-  //   );
-  p2pserver.broadcastTransaction(transaction);
-  res.redirect("/transactions");
+    console.log(`Recipient: ${recipient} | Amount: ${amount}`);
+
+    const txt = new Transaction(wallet.publicKey, recipient, parseInt(amount));
+    txt.signTransaction(wallet.keyPair);
+    MyCoin.addTransaction(txt);
+
+    p2pserver.broadcastTransaction(txt);
+    res.send(txt);
+  } catch (err) {
+    console.log(err);
+    res.send(err);
+  }
 });
 
 // get public key
@@ -142,24 +153,23 @@ app.get("/history", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const { username, password } = req.body;
-  const isLogin = account.login(username, password);
+  const { privateKey, password } = req.body;
+  const isLogin = Wallet.login(privateKey, password);
 
   if (isLogin) {
-    wallet = new Wallet(username);
-    miner = new Miner(blockchain, transactionPool, wallet, p2pserver);
+    wallet = new Wallet(privateKey);
     res.send("Login Success");
   } else {
     res.send("Invalid username or password");
   }
 });
 
-app.get("/register", (req, res) => {
-  const username = ChainUtil.genKeyPair().getPrivate("hex");
-  const password = "admin";
-  account.saveToFile(username, password);
+app.post("/register", (req, res) => {
+  const privateKey = ec.genKeyPair().getPrivate("hex");
+  const password = req.body.password;
+  Wallet.saveToFile(privateKey, password);
   res.json({
-    username,
+    privateKey,
     password,
   });
 });

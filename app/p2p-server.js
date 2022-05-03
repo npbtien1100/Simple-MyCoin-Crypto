@@ -1,4 +1,6 @@
-import { WebSocketServer } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
+import Block from "../components/block/block.js";
+import Transaction from "../components/transaction/transaction.js";
 //declare the peer to peer server port
 const P2P_PORT = process.env.P2P_PORT || 5001;
 
@@ -6,13 +8,14 @@ const P2P_PORT = process.env.P2P_PORT || 5001;
 const peers = process.env.PEERS ? process.env.PEERS.split(",") : [];
 
 const MESSAGE_TYPE = {
-  chain: "CHAIN",
+  blockChain: "BLOCKCHAIN",
   transaction: "TRANSACTION",
   clear_transactions: "CLEAR_TRANSACTIONS",
+  block: "BLOCK",
 };
 class P2pserver {
   constructor(blockchain) {
-    this.blockchain = blockchain;
+    this.blockChain = blockchain;
     this.sockets = [];
   }
 
@@ -51,7 +54,7 @@ class P2pserver {
 
     // on new connection send the blockchain chain to the peer
 
-    this.sendChain(socket);
+    this.sendBlockChain(socket);
   }
 
   connectToPeers() {
@@ -73,25 +76,36 @@ class P2pserver {
       console.log("data ", data);
 
       switch (data.type) {
-        case MESSAGE_TYPE.chain:
+        case MESSAGE_TYPE.blockChain:
           /**
            * call replace blockchain if the
            * recieved chain is longer it will replace it
            */
-          this.blockchain.replaceChain(data.chain);
+          this.blockChain.replaceChain(data.blockChain);
           break;
         case MESSAGE_TYPE.transaction:
           /**
            * add transaction to the transaction pool
            */
-          this.blockchain.transactionsPool.push(data.transaction);
+          try {
+            const txtInstance = Transaction.getInstanceFromJSON(
+              data.transaction
+            );
+            this.blockChain.addTransaction(txtInstance);
+          } catch (err) {
+            console.log(err);
+          }
           break;
+
         case MESSAGE_TYPE.clear_transactions:
           /**
            * clear the transactionpool
            */
           this.blockchain.transactionsPool = [];
           break;
+        case MESSAGE_TYPE.block:
+          const blockInstance = Block.getInstanceFromJSON(data.block);
+          this.blockChain.addBlock(blockInstance);
       }
     });
   }
@@ -99,11 +113,11 @@ class P2pserver {
    * helper function to send the chain instance
    */
 
-  sendChain(socket) {
+  sendBlockChain(socket) {
     socket.send(
       JSON.stringify({
-        type: MESSAGE_TYPE.chain,
-        chain: this.blockchain.chain,
+        type: MESSAGE_TYPE.blockChain,
+        blockChain: this.blockChain,
       })
     );
   }
@@ -114,9 +128,9 @@ class P2pserver {
    * the blockchain
    */
 
-  syncChain() {
+  syncBlockChain() {
     this.sockets.forEach((socket) => {
-      this.sendChain(socket);
+      this.sendBlockChain(socket);
     });
   }
 
@@ -154,6 +168,21 @@ class P2pserver {
         })
       );
     });
+  }
+
+  broadcastBlock(block) {
+    this.sockets.forEach((socket) => {
+      this.sendBlock(socket, block);
+    });
+  }
+
+  sendBlock(socket, block) {
+    socket.send(
+      JSON.stringify({
+        type: MESSAGE_TYPE.block,
+        block: block,
+      })
+    );
   }
 }
 

@@ -62,7 +62,24 @@ class Block {
     return true;
   }
 
-  nonce = 0;
+  isBlockValid() {
+    if (!this.hasValidTransactions()) {
+      return false;
+    }
+
+    if (this.hash !== this.calculateHash()) {
+      return false;
+    }
+
+    if (
+      this.hash.substring(0, this.difficulty) !==
+      Array(this.difficulty + 1).join("0")
+    ) {
+      return false;
+    }
+    return true;
+  }
+
   static getInstanceFromJSON(block) {
     return new Block(
       block.index,
