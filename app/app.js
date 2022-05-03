@@ -3,7 +3,7 @@ import express from "express";
 import path from "path";
 import cookieParser from "cookie-parser";
 import logger from "morgan";
-
+import createError from "http-errors";
 import indexRouter from "../routes/index.js";
 import usersRouter from "../routes/users.js";
 
@@ -42,8 +42,21 @@ const myKey = ec.keyFromPrivate(
 const myWalletAddress = myKey.getPublic("hex");
 const p2pserver = new P2pserver(MyCoin);
 
-app.use("/", indexRouter);
-app.use("/users", usersRouter);
+const requireLogin = (req, res, next) => {
+  if (wallet) {
+    return next();
+  }
+  res.redirect("/login");
+};
+const requireLogout = (req, res, next) => {
+  if (!wallet) {
+    return next();
+  }
+  res.redirect("/wallet");
+};
+app.get("/", (req, res) => {
+  res.redirect("/wallet");
+});
 //api to get the blocks
 app.get("/blocks", (req, res) => {
   res.json(MyCoin.chain);
@@ -51,35 +64,42 @@ app.get("/blocks", (req, res) => {
 app.get("/blockchain", (req, res) => {
   res.json(MyCoin);
 });
-//api to add blocks
-app.post("/mine", (req, res) => {
-  //const block = MyCoin.addBlock(req.body.data);
-  console.log(`New block added: ${block.toString()}`);
+// //api to add blocks
+// app.post("/mine", (req, res) => {
+//   //const block = MyCoin.addBlock(req.body.data);
+//   console.log(`New block added: ${block.toString()}`);
 
-  /**
-   * use the synchain method to synchronise the
-   * state of the blockchain
-   */
-  p2pserver.syncChain();
-  res.redirect("/blocks");
-});
+//   /**
+//    * use the synchain method to synchronise the
+//    * state of the blockchain
+//    */
+//   p2pserver.syncChain();
+//   res.redirect("/blocks");
+// });
 
 // api to start mining
-app.get("/mine-transactions", (req, res) => {
-  const block = MyCoin.minePendingTransactions(wallet.publicKey);
+app.get("/wallet", requireLogin, (req, res) => {
+  res.render("index");
+});
+app.get("/mine-transactions", requireLogin, (req, res) => {
+  try {
+    const block = MyCoin.minePendingTransactions(wallet.publicKey);
 
-  p2pserver.broadcastBlock(block);
+    p2pserver.broadcastBlock(block);
 
-  res.redirect("/blocks");
+    res.redirect("/blocks");
+  } catch (err) {
+    next(createError(err.status));
+  }
 });
 
 // api to view transaction in the transaction pool
-app.get("/transactions", (req, res) => {
+app.get("/transactions", requireLogin, (req, res) => {
   res.json(MyCoin.transactionsPool);
 });
 
 // create transactions
-app.post("/transact", (req, res) => {
+app.post("/transact", requireLogin, (req, res) => {
   try {
     const { recipient, amount } = req.body;
 
@@ -92,8 +112,7 @@ app.post("/transact", (req, res) => {
     p2pserver.broadcastTransaction(txt);
     res.send(txt);
   } catch (err) {
-    console.log(err);
-    res.send(err);
+    next(createError(err.status));
   }
 });
 
@@ -152,26 +171,54 @@ app.get("/history", (req, res) => {
   res.render("history/index", { title: "History", chains, transactions });
 });
 
+app.get("/login", requireLogout, (req, res) => {
+  res.render("login", { layout: false });
+});
+app.get("/logout", (req, res) => {
+  wallet = null;
+  res.redirect("/login");
+});
 app.post("/login", (req, res) => {
   const { privateKey, password } = req.body;
   const isLogin = Wallet.login(privateKey, password);
 
   if (isLogin) {
     wallet = new Wallet(privateKey);
-    res.send("Login Success");
+    res.status(200).json({ message: "Login successfully" });
   } else {
-    res.send("Invalid username or password");
+    res.status(401).json({ message: "Invalid key or password" });
   }
 });
 
+app.get("/register", requireLogout, (req, res) => {
+  res.render("register", { layout: false });
+});
 app.post("/register", (req, res) => {
-  const privateKey = ec.genKeyPair().getPrivate("hex");
-  const password = req.body.password;
-  Wallet.saveToFile(privateKey, password);
-  res.json({
-    privateKey,
-    password,
-  });
+  try {
+    const privateKey = ec.genKeyPair().getPrivate("hex");
+    const password = req.body.password;
+    Wallet.saveToFile(privateKey, password);
+    res.json({
+      privateKey,
+      password,
+    });
+  } catch (err) {}
+});
+
+// catch 404 and forward to error handler
+app.use(function (req, res, next) {
+  next(createError(404));
+});
+
+// error handler
+app.use(function (err, req, res, next) {
+  // set locals, only providing error in development
+  res.locals.message = err.message;
+  res.locals.error = req.app.get("env") === "development" ? err : {};
+
+  // render the error page
+  res.status(err.status || 500);
+  res.render("404", { layout: false });
 });
 
 export default app;
