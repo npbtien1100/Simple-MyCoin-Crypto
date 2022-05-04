@@ -1,0 +1,27 @@
+<h1 class="mt-4">Send coin</h1>
+<ol class="breadcrumb mb-4">
+    <li class="breadcrumb-item active">Send coin to another wallet</li>
+</ol>
+<div class="row justify-content-center">
+    <div class="col-lg-5">
+        <div id="result"></div>
+        <div class="card shadow-lg border-0 rounded-lg mt-5">
+            <div class="card-header">
+                <h3 class="text-center font-weight-light my-4">There are {{transactionPool.length}} pending transactions
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="mt-2 mb-0">
+                    <div class="d-grid">
+                        <button class="btn btn-primary btn-lg" id="btn-mine" {{#unless transactionPool.length}}
+                            disabled{{/unless}}>
+                            Peding now!</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="js/minecoin.js"></script>

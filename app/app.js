@@ -79,7 +79,26 @@ app.get("/blockchain", (req, res) => {
 
 // api to start mining
 app.get("/wallet", requireLogin, (req, res) => {
-  res.render("index");
+  try {
+    const publicKey = wallet.publicKey;
+    const privateKey = wallet.keyPair.getPrivate("hex");
+
+    const balance = MyCoin.getBalanceOfAddress(publicKey);
+
+    const myWallet = { publicKey, privateKey, balance };
+    res.render("index", { myWallet });
+  } catch (err) {
+    console.log(err);
+  }
+});
+
+app.get("/mine-coin", requireLogin, (req, res) => {
+  try {
+    const transactionPool = MyCoin.transactionsPool;
+    res.render("minecoin", { transactionPool });
+  } catch (err) {
+    console.log(err);
+  }
 });
 app.get("/mine-transactions", requireLogin, (req, res) => {
   try {
@@ -87,9 +106,12 @@ app.get("/mine-transactions", requireLogin, (req, res) => {
 
     p2pserver.broadcastBlock(block);
 
-    res.redirect("/blocks");
+    res.json({
+      message:
+        "Mining Block Successfully! Mining reward was send to your wallet",
+    });
   } catch (err) {
-    next(createError(err.status));
+    return res.status(err.status || 500).json({ message: err.message });
   }
 });
 
@@ -97,9 +119,15 @@ app.get("/mine-transactions", requireLogin, (req, res) => {
 app.get("/transactions", requireLogin, (req, res) => {
   res.json(MyCoin.transactionsPool);
 });
+app.get("/send-coin", requireLogin, (req, res) => {
+  const publicKey = wallet.publicKey;
+  const balance = MyCoin.getBalanceOfAddress(publicKey);
+  const myWallet = { balance };
 
+  res.render("sendcoin", { myWallet });
+});
 // create transactions
-app.post("/transact", requireLogin, (req, res) => {
+app.post("/transaction", requireLogin, (req, res) => {
   try {
     const { recipient, amount } = req.body;
 
@@ -110,9 +138,9 @@ app.post("/transact", requireLogin, (req, res) => {
     MyCoin.addTransaction(txt);
 
     p2pserver.broadcastTransaction(txt);
-    res.send(txt);
+    res.json({ message: "Send coin successfully!" });
   } catch (err) {
-    next(createError(err.status));
+    return res.status(err.status || 500).json({ message: err.message });
   }
 });
 
@@ -191,20 +219,41 @@ app.post("/login", (req, res) => {
 });
 
 app.get("/register", requireLogout, (req, res) => {
-  res.render("register", { layout: false });
+  const keyPair = ec.genKeyPair();
+  const publicKey = keyPair.getPublic().encode("hex");
+  const privateKey = keyPair.getPrivate("hex");
+  res.render("register", { layout: false, key: { publicKey, privateKey } });
 });
 app.post("/register", (req, res) => {
   try {
-    const privateKey = ec.genKeyPair().getPrivate("hex");
-    const password = req.body.password;
+    console.log("post to register");
+    const { privateKey, password, confirmPassword } = req.body;
+    if (password !== confirmPassword) {
+      console.log("Co chay vao day");
+      return res
+        .status(400)
+        .json({ message: "Password and Confirm password is not identical!" });
+    } else if (!privateKey) {
+      console.log("Co chay vao private");
+      return res.status(400).json({ message: "privateKey is required!" });
+    }
     Wallet.saveToFile(privateKey, password);
-    res.json({
-      privateKey,
-      password,
-    });
-  } catch (err) {}
+    res.json({ message: "Create wallet successfully!" });
+  } catch (err) {
+    console.log(err);
+    return res.status(err.status || 500).json({ message: err.message });
+  }
 });
-
+app.get("/api/create-keypair", (req, res) => {
+  try {
+    const keyPair = ec.genKeyPair();
+    const publicKey = keyPair.getPublic().encode("hex");
+    const privateKey = keyPair.getPrivate("hex");
+    res.status(200).json({ publicKey: publicKey, privateKey: privateKey });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+});
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));
