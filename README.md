@@ -16,10 +16,10 @@ Yêu cầu:
 
 ```
 Hướng dẫn sử dụng
-1. Cài đặt các gói cần thiết bằng lệnh: **npm install**
+1. Cài đặt các gói cần thiết bằng lệnh: npm install
 2. Cấu hình server
 Mỗi server đóng vai trò là một node trong mạng lưới blockchain
-Mỗi server cần cấu hình **HTTP_PORT** và **P2P_PORT** trong file **.env**
+Mỗi server cần cấu hình HTTP_PORT và P2P_PORT trong file .env
 example:
 node1:
    HTTP_PORT=3000
@@ -33,7 +33,7 @@ node3:
    HTTP_PORT = 3002
    PEERS =ws://localhost:5000,ws://localhost:5001
 ...
-3. Chạy server bằng lệnh: **npm start**
+3. Chạy server bằng lệnh: npm start
 ```
 
 ```
