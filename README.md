@@ -22,16 +22,16 @@ Mỗi server cần cấu hình HTTP_PORT và P2P_PORT trong file .env
 Mỗi server đóng vai trò là một node trong mạng lưới blockchain
 example:
 node1:
-HTTP_PORT=3000
-P2P_PORT=5000
+   HTTP_PORT=3000
+   P2P_PORT=5000
 node2:
-HTTP_PORT=3001
-P2P_PORT=5001
-PEERS =ws://localhost:5000
+   HTTP_PORT=3001
+   P2P_PORT=5001
+   PEERS =ws://localhost:5000
 node3:
-P2P_PORT= 5002
-HTTP_PORT = 3002
-PEERS =ws://localhost:5000,ws://localhost:5001
+   P2P_PORT= 5002
+   HTTP_PORT = 3002
+   PEERS =ws://localhost:5000,ws://localhost:5001
 ...
 ```
 
