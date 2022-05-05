@@ -57,7 +57,7 @@ app.get("/blockchain", requireLogin, (req, res) => {
     block_generation_interval: MyCoin.BLOCK_GENERATION_INTERVAL,
     initial_balance: MyCoin.initial_balance,
     miningReward: MyCoin.miningReward,
-    totalNode: p2pserver.sockets.length,
+    totalNode: p2pserver.sockets.length + 1,
   };
   const blocks = MyCoin.chain.map((el) => {
     return { ...el, timestamp: new Date(el.timestamp).toLocaleString() };
