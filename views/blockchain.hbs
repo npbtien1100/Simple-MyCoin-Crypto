@@ -1,0 +1,92 @@
+<h1 class="mt-4">MyCoin System</h1>
+<ol class="breadcrumb mb-4">
+    <li class="breadcrumb-item active">Information about MyCoin System</li>
+</ol>
+difficulty: MyCoin.difficulty,
+difficulty_adjusment_interval: MyCoin.DIFFICULTY_ADJUSTMENT_INTERVAL,
+block_generation_interval: MyCoin.BLOCK_GENERATION_INTERVAL,
+initial_balance: MyCoin.initial_balance,
+miningReward: MyCoin.miningReward,
+<div class="row">
+    <div class="col-xl-4 col-md-6">
+        <div class="card bg-info text-white mb-4">
+            <div class="card-header">
+                <h5 class="text-center font-weight-light my-2">System information</h5>
+            </div>
+            <div class="card-body">Total nodes in network: {{blockchain.totalNode}}</div>
+            <div class="card-body">Total blocks: {{blocks.length}}</div>
+            <div class="card-body">-----------------</div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6">
+        <div class="card bg-info text-white mb-4">
+            <div class="card-header">
+                <h5 class="text-center font-weight-light my-2">Wallet information</h5>
+            </div>
+            <div class="card-body">Initial balance of wallet: {{blockchain.initial_balance}}</div>
+            <div class="card-body">Mining reward per blocks: {{blockchain.miningReward}}</div>
+            <div class="card-body">-----------------</div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6">
+        <div class="card bg-info text-white mb-4">
+            <div class="card-header">
+                <h5 class="text-center font-weight-light my-2">Mining Difficulty</h5>
+            </div>
+            <div class="card-body">Current mining difficulty: {{blockchain.difficulty}}</div>
+            <div class="card-body">Difficulty adjusment interval: {{blockchain.difficulty_adjusment_interval}} blocks
+            </div>
+            <div class="card-body">Block generation interval: {{blockchain.block_generation_interval}} mins
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="fas fa-table me-1"></i>
+        All Blocks
+    </div>
+    <div class="card-body">
+        <table id="datatablesSimple" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Block Index</th>
+                    <th>Created Time</th>
+                    <th>Number of Transactions</th>
+                    <th>Nonce</th>
+                    <th>Difficulty</th>
+                    <th>Block hash</th>
+                    <th>Previous hash</th>
+                </tr>
+            </thead>
+            <tfoot>
+                <tr>
+                    <th>Block Index</th>
+                    <th>Created Time</th>
+                    <th>Number of Transactions</th>
+                    <th>Nonce</th>
+                    <th>Difficulty</th>
+                    <th>Block hash</th>
+                    <th>Previous hash</th>
+                </tr>
+            </tfoot>
+            <tbody>
+                {{#each blocks}}
+                <tr>
+                    <td>{{this.index}}</td>
+                    <td>{{this.timestamp}}</td>
+                    <td>{{this.transactions.length}}</td>
+                    <td>{{this.nonce}}</td>
+                    <td>{{this.difficulty}}</td>
+                    <td>{{this.hash}}</td>
+                    <td>{{this.previousHash}}</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="js/datatables-simple-demo.js"></script>

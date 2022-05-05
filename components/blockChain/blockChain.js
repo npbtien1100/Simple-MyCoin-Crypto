@@ -167,6 +167,18 @@ class Blockchain {
     return txs;
   }
 
+  getAllTransaction() {
+    const txs = [];
+
+    for (const block of this.chain) {
+      for (const tx of block.transactions) {
+        txs.push(tx);
+      }
+    }
+
+    debug("get transactions for wallet count: %s", txs.length);
+    return txs;
+  }
   /**
    * Loops over all the blocks in the chain and verify if they are properly
    * linked together and nobody has tampered with the hashes. By checking

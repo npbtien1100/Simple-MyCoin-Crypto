@@ -11,5 +11,9 @@ $("document").ready(function () {
       },
     });
   });
-  $
+
+  const datatablesSimple = document.getElementById("datatablesSimple");
+  if (datatablesSimple) {
+    new simpleDatatables.DataTable(datatablesSimple, { select: true });
+  }
 });

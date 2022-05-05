@@ -1,38 +1,19 @@
-<h1 class="mt-4">Mine coin</h1>
+<h1 class="mt-4">{{title.big}}</h1>
 <ol class="breadcrumb mb-4">
-    <li class="breadcrumb-item active">Mining pending transactions to receive reward</li>
+    <li class="breadcrumb-item active">{{title.small}}</li>
 </ol>
-<div class="row justify-content-center mb-5">
-    <div class="col-lg-5">
-        <div id="result"></div>
-        <div class="card shadow-lg border-0 rounded-lg mt-5">
-            <div class="card-header">
-                <h3 class="text-center font-weight-light my-4">There are {{transactionPool.length}} pending transactions
-                </h3>
-            </div>
-            <div class="card-body">
-                <div class="mt-2 mb-0">
-                    <div class="d-grid">
-                        <button class="btn btn-primary btn-lg" id="btn-mine" {{#unless transactionPool.length}}
-                            disabled{{/unless}}>
-                            Peding now!</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <div class="card mb-4">
     <div class="card-header">
         <i class="fas fa-table me-1"></i>
-        Pending transactions
+        {{title.table}}
     </div>
     <div class="card-body">
         <table id="datatablesSimple" style="width:100%">
             <thead>
                 <tr>
                     <th>Transaction Hash</th>
+                    <th>Status</th>
                     <th>From</th>
                     <th>To</th>
                     <th>Amount</th>
@@ -42,6 +23,7 @@
             <tfoot>
                 <tr>
                     <th>Transaction Hash</th>
+                    <th>Status</th>
                     <th>From</th>
                     <th>To</th>
                     <th>Amount</th>
@@ -52,6 +34,17 @@
                 {{#each transactionPool}}
                 <tr>
                     <td>{{this.hash}}</td>
+                    <td class="text-primary"><b>pending</b></td>
+                    <td>{{this.fromAddress}}</td>
+                    <td>{{this.toAddress}}</td>
+                    <td>{{this.amount}}</td>
+                    <td>{{this.timestamp}}</td>
+                </tr>
+                {{/each}}
+                {{#each validTransaction}}
+                <tr>
+                    <td>{{this.hash}}</td>
+                    <td class="text-success"><b>success</b></td>
                     <td>{{this.fromAddress}}</td>
                     <td>{{this.toAddress}}</td>
                     <td>{{this.amount}}</td>
